@@ -1,4 +1,5 @@
 #include "FreeCam.h"
+#include <Kismet/GameplayStatics.h>
 
 AFreeCam::AFreeCam() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -8,6 +9,11 @@ void AFreeCam::BeginPlay() {
 	Super::BeginPlay();
     APlayerController* PC = Cast<APlayerController>(GetController());
     PC->SetInputMode(FInputModeGameOnly());
+    AActor* LevelSequenceActor = UGameplayStatics::GetActorOfClass(GetWorld(), ALevelSequenceActor::StaticClass());
+    CineCameraSequence = Cast<ALevelSequenceActor>(LevelSequenceActor);
+    AActor* CineCameraActor = UGameplayStatics::GetActorOfClass(GetWorld(), ACineCameraActor::StaticClass());
+    CineCamera = Cast<ACineCameraActor>(CineCameraActor);
+
 }
 
 void AFreeCam::Tick(float DeltaTime) {
@@ -52,4 +58,16 @@ void AFreeCam::AddMoveSpeed(const FInputActionValue& Value) {
     if (Controller == nullptr) return;
     MovementSpeedMultiplier += Value.Get<float>();
     MovementSpeedMultiplier = FMath::Clamp(MovementSpeedMultiplier, 0.1f, 10.0f);
+}
+
+void AFreeCam::ToggleFreeCam() {
+    if (CineCameraSequence->GetSequencePlayer() == nullptr) return;
+
+    if (CineCameraSequence->GetSequencePlayer()->IsPlaying()) {
+        CineCameraSequence->GetSequencePlayer()->Stop();
+        this->SetActorTransform(CineCamera->GetTransform());
+    }
+    else {
+        CineCameraSequence->GetSequencePlayer()->PlayLooping();
+    }
 }
